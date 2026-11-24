@@ -4,7 +4,7 @@ Ferramenta desenvolvida para gerar senhas únicas, complexas e determinísticas 
 
 Ideal para provisionamento padronizado de CPEs, ONTs, roteadores, switches e servidores sem a necessidade de armazenar bancos de senhas individuais por equipamento.
 
-* 🌐 **Versão Web Online:** [key.iknet.com.br](https://key.iknet.com.br)
+* 🌐 **Versão Web Online:** [mac-password-gen.vercel.app](https://mac-password-gen.vercel.app)
 * 🪟 **Versão Offline Portátil (Windows 10/11):** [Baixar GeradorSenhaMAC.exe (Última Versão)](https://github.com/vanilsonst/mac-password-gen/releases/latest/download/GeradorSenhaMAC.exe)
 
 ---
