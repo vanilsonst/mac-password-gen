@@ -36,18 +36,20 @@ jobs:
       - name: Compilar GeradorSenhaMAC.exe
         working-directory: desktop
         run: |
-          $iconArg = ""
+          $args = @(
+            "--noconfirm",
+            "--onefile",
+            "--windowed",
+            "--name", "GeradorSenhaMAC",
+            "--add-data", "index.html;.",
+            "--add-data", "..\app.js;."
+          )
           if (Test-Path "favicon.ico") {
-            $iconArg = "--icon=favicon.ico"
+            $args += "--icon=favicon.ico"
           } elseif (Test-Path "..\favicon.ico") {
-            $iconArg = "--icon=..\favicon.ico"
+            $args += "--icon=..\favicon.ico"
           }
-          pyinstaller --noconfirm --onefile --windowed `
-            --name "GeradorSenhaMAC" `
-            $iconArg `
-            --add-data "index.html;." `
-            --add-data "..\app.js;." `
-            main.py
+          pyinstaller @args main.py
 
       - name: Disponibilizar .exe como Artifact do Workflow
         uses: actions/upload-artifact@v4
