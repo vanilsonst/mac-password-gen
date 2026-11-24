@@ -1,8 +1,11 @@
 # 🔐 Derivador Determinístico de Senha por Endereço MAC
 
-Ferramenta web (Client-Side) e CLI desenvolvida para gerar senhas únicas, complexas e determinísticas a partir do endereço MAC de uma interface de rede combinada a uma chave mestra secreta (`MASTER_SECRET`).
+Ferramenta desenvolvida para gerar senhas únicas, complexas e determinísticas a partir do endereço MAC de uma interface de rede combinada a uma chave mestra secreta (**Chave Mestra** / `MASTER_SECRET`).
 
 Ideal para provisionamento padronizado de CPEs, ONTs, roteadores, switches e servidores sem a necessidade de armazenar bancos de senhas individuais por equipamento.
+
+* 🌐 **Versão Web Online:** [key.iknet.com.br](https://key.iknet.com.br)
+* 🪟 **Versão Offline Portátil (Windows 10/11):** [Baixar GeradorSenhaMAC.exe (Última Versão)](https://github.com/vanilsonst/mac-password-gen/releases/latest/download/GeradorSenhaMAC.exe)
 
 ---
 
@@ -10,10 +13,10 @@ Ideal para provisionamento padronizado de CPEs, ONTs, roteadores, switches e ser
 
 Diferente de uma criptografia reversível tradicional, esta ferramenta utiliza uma **Função de Derivação de Chave baseada em Hash (HMAC-SHA256)**:
 
-$$\text{Senha} = \text{MapeamentoDeterminístico}\big(\text{HMAC-SHA256}(\text{MASTER\_SECRET},\ \text{MAC\_normalizado})\big)$$
+$$\text{Senha} = \text{MapeamentoDeterminístico}\big(\text{HMAC-SHA256}(\text{Chave Mestra},\ \text{MAC\_normalizado})\big)$$
 
 1. **Normalização do MAC:** Qualquer formato de entrada (`AA:BB:CC:11:22:33`, `aa-bb-cc-11-22-33` ou `aabbcc112233`) é higienizado para 12 caracteres hexadecimais em minúsculo (`aabbcc112233`).
-2. **Assinatura Criptográfica (HMAC-SHA256):** O MAC normalizado é assinado usando o `MASTER_SECRET`, gerando um *digest* de 32 bytes (256 bits).
+2. **Assinatura Criptográfica (HMAC-SHA256):** O MAC normalizado é assinado usando a Chave Mestra, gerando um *digest* de 32 bytes (256 bits).
 3. **Garantia de Complexidade:** Os primeiros 4 bytes do *digest* selecionam obrigatoriamente:
    - `1` letra minúscula (`a-z`)
    - `1` letra maiúscula (`A-Z`)
@@ -22,46 +25,65 @@ $$\text{Senha} = \text{MapeamentoDeterminístico}\big(\text{HMAC-SHA256}(\text{M
 4. **Preenchimento e Embaralhamento (Fisher-Yates):** Os bytes seguintes completam o tamanho desejado (entre 12 e 32 caracteres) e os 16 bytes finais embaralham a posição dos caracteres de forma determinística.
 
 ### Propriedades de Segurança
-* **Determinismo:** A mesma combinação de `MASTER_SECRET` + `MAC` sempre produzirá exatamente a mesma senha em qualquer dispositivo, navegador ou script Python compatível.
-* **Zero-Knowledge / 100% Client-Side:** Na versão web, todo o cálculo ocorre localmente no navegador do operador via **Web Crypto API** (`window.crypto.subtle`). Nenhum dado trafega pela rede ou é registrado em logs de servidor.
-* **Irreversibilidade:** Mesmo que alguém descubra a senha de um equipamento e conheça seu endereço MAC, é matematicamente inviável deduzir o `MASTER_SECRET` ou calcular a senha de outro equipamento da rede.
+* **Determinismo:** A mesma combinação de `Chave Mestra` + `MAC` + `Tamanho` sempre produzirá exatamente a mesma senha em qualquer dispositivo (Web, Executável Windows ou script Python).
+* **Zero-Knowledge / 100% Local:** Todo o cálculo ocorre localmente no navegador (via **Web Crypto API**) ou na máquina local (no executável Windows). Nenhum dado trafega pela rede.
+* **Irreversibilidade:** Mesmo que alguém descubra a senha de um equipamento e conheça seu endereço MAC, é matematicamente inviável deduzir a Chave Mestra ou calcular a senha de outro equipamento da rede.
 * **Caracteres Seguros para Automação:** O conjunto de símbolos especiais (`!@#$%&*_-+=`) exclui propositalmente aspas (`'`, `"`), barras (`\`, `/`) e crases (`` ` ``) para evitar falhas de *escaping* em sessões SSH, Telnet, scripts RouterOS, payloads JSON/XML e provisionamento TR-069 (ACS).
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 Estrutura do Repositório
 
 ```text
 mac-password-gen/
-├── index.html   # Interface web responsiva (Tailwind CSS)
-├── app.js       # Lógica criptográfica HMAC-SHA256 (Web Crypto API) e localStorage
-└── README.md    # Documentação do projeto
+├── .github/
+│   └── workflows/
+│       └── build-exe.yml   # Pipeline CI/CD que compila e publica o .exe no GitHub Releases
+├── desktop/
+│   ├── index.html          # Interface offline autocontida (CSS embutido) para o executável
+│   └── main.py             # Lançador nativo Windows usando pywebview (Edge WebView2)
+├── index.html              # Interface web responsiva (Tailwind CSS) hospedada na Vercel
+├── app.js                  # Lógica criptográfica HMAC-SHA256 e UI compartilhada entre Web e Desktop
+├── .gitignore              # Exclusão de artefatos locais de build do PyInstaller
+└── README.md               # Documentação do projeto
+
 ```
----
-
-## 🚀 Funcionalidades da Interface Web
-
-* **Geração e Recuperação:** Basta inserir o `MASTER_SECRET` e o endereço MAC para visualizar imediatamente a senha correspondente.
-* **Gerador de Chave Mestra:** Botão dedicado que utiliza `window.crypto.getRandomValues()` (CSPRNG) para criar chaves aleatórias de 192 bits (48 caracteres hexadecimais).
-* **Persistência Local Opcional:** Opção de salvar o `MASTER_SECRET` exclusivamente no `localStorage` do navegador do operador, com botão de limpeza rápida.
-* **Cópia Rápida:** Botões dedicados para copiar tanto o `MASTER_SECRET` quanto a senha derivada para a área de transferência com um clique.
 
 ---
 
-## 🌐 Deploy na Vercel
+## ✨ Funcionalidades
 
-Este projeto não possui dependências de *build* ou *backend*, permitindo hospedagem estática gratuita com HTTPS automático:
+* **Máscara Automática de MAC:** Insere `:` automaticamente durante a digitação ou colagem em qualquer formato (Cisco, traços, sem separadores).
+* **Gerador de Chave Mestra:** Cria chaves aleatórias criptograficamente seguras de 192 bits (48 caracteres hexadecimais) via CSPRNG (`crypto.getRandomValues`).
+* **Persistência Local Opcional:** Permite salvar a Chave Mestra localmente no navegador ou no executável Windows (`localStorage`), com opção de remoção rápida.
+* **Guia Rápido Integrado:** Pop-up interativo (*"Como usar?"*) com instruções passo a passo para operadores e técnicos de campo.
+* **Distribuição Automatizada:** A cada atualização no código (`app.js` ou `desktop/`), o GitHub Actions compila automaticamente o `GeradorSenhaMAC.exe` e atualiza o link de download direto exibido na interface web.
 
-1. Faça o *push* deste repositório para sua conta no **GitHub**.
-2. Acesse [vercel.com/new](https://vercel.com/new) e importe o repositório `mac-password-gen`.
-3. Em **Framework Preset**, mantenha **Other** (deixe *Build Command* e *Output Directory* vazios).
-4. Clique em **Deploy**.
+---
+
+## 🛠️ Compilação Manual do Executável (Opcional)
+
+Caso deseje gerar o `.exe` portátil localmente em uma máquina Windows:
+
+```powershell
+pip install pywebview pyinstaller
+
+cd desktop
+pyinstaller --noconfirm --onefile --windowed `
+  --name "GeradorSenhaMAC" `
+  --add-data "index.html;." `
+  --add-data "..\app.js;." `
+  main.py
+
+```
+
+O executável portátil será gerado em `desktop/dist/GeradorSenhaMAC.exe`.
 
 ---
 
 ## 🐍 Equivalência em Python (Automação / Backend / CLI)
 
-Para integrar a mesma geração de senhas em scripts de provisionamento (IXC, GenieACS, Ansible, RouterOS, etc.), utilize o código abaixo, que produz **exatamente os mesmos resultados** da interface web:
+Para integrar a mesma geração de senhas em scripts de provisionamento (IXC, GenieACS, Ansible, RouterOS, etc.), utilize o código abaixo, que produz **exatamente os mesmos resultados** das interfaces Web e Desktop:
 
 ```python
 import hashlib
@@ -117,8 +139,8 @@ def gerar_senha_por_mac(mac: str, segredo: str, tamanho: int = 14) -> str:
 
 ## 🛡️ Boas Práticas de Operação
 
-* **Proteja o `MASTER_SECRET`:** Armazene a chave mestra em um cofre de senhas corporativo (ex: Bitwarden/Vaultwarden) e em variáveis de ambiente nos servidores de automação. Nunca faça *commit* da chave real no código-fonte.
-* **Rotação de Chaves:** Caso precise invalidar senhas antigas e gerar um novo padrão, basta gerar um novo `MASTER_SECRET` (ou adicionar um sufixo de versão à chave atual, como `chave-atual-v2`).
-* **Escolha da Interface:** Ao provisionar equipamentos com múltiplas interfaces (WAN, LAN, WLAN), padronize qual MAC será utilizado como referência (ex: MAC da interface WAN ou MAC base impresso na etiqueta do chassi).
+* **Proteja a Chave Mestra:** Armazene a chave oficial em um cofre de senhas corporativo e em variáveis de ambiente nos servidores de automação. Nunca faça *commit* da chave real no repositório.
+* **Rotação de Chaves:** Caso precise invalidar senhas antigas e gerar um novo padrão, gere uma nova Chave Mestra (ou adicione um sufixo de versão à chave atual, como `chave-atual-v2`).
+* **Padronização de Interface:** Em equipamentos com múltiplas interfaces (WAN, LAN, WLAN), padronize qual MAC será utilizado como referência (ex: MAC da interface WAN ou MAC base impresso na etiqueta do chassi).
 
 ```
