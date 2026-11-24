@@ -146,3 +146,19 @@ async function copiarTexto(elementId, btnId, isInput) {
     btn.textContent = textoOriginal;
   }, 1800);
 }
+
+function formatarMacInput(input) {
+  const posOriginal = input.selectionStart;
+  const antesDoCursor = input.value.slice(0, posOriginal).replace(/[^0-9a-fA-F]/g, '').length;
+
+  const hexLimpo = input.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 12);
+  const pares = hexLimpo.match(/.{1,2}/g);
+  const formatado = pares ? pares.join(':') : '';
+
+  input.value = formatado;
+
+  // Recalcula a posição exata do cursor considerando os ':' adicionados
+  let novaPos = antesDoCursor + Math.floor((antesDoCursor - 1) / 2);
+  if (antesDoCursor === 0) novaPos = 0;
+  input.setSelectionRange(novaPos, novaPos);
+}

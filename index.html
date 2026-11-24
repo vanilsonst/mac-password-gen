@@ -53,7 +53,8 @@
     <div class="grid grid-cols-3 gap-3">
       <div class="col-span-2">
         <label for="mac" class="block text-sm font-medium text-slate-300 mb-1">Endereço MAC</label>
-        <input id="mac" type="text" placeholder="AA:BB:CC:11:22:33"
+        <input id="mac" type="text" placeholder="AA:BB:CC:11:22:33" maxlength="17"
+          oninput="formatarMacInput(this)"
           onkeydown="if(event.key === 'Enter') calcularSenha()"
           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-emerald-500" />
       </div>
