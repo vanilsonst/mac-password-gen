@@ -2,68 +2,184 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.github.com; img-src 'self' data:; base-uri 'self'; form-action 'none';" />
   <title>Gerador de Senha por MAC</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f172a'/%3E%3Cpath d='M42 14a12 12 0 0 0-11.3 16L16 44.7V50h5.3l2.7-2.7V44h3.3l2.7-2.7V38h3.3l1.4-1.4A12 12 0 1 0 42 14zm3 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z' fill='%2310b981'/%3E%3C/svg%3E" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-    body { background: #020617; color: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
-    .card { width: 100%; max-width: 512px; background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); display: flex; flex-direction: column; gap: 20px; }
+    body {
+      background: #020617;
+      color: #f1f5f9;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+    }
+    .card {
+      width: 100%;
+      max-width: 512px;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
     .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    h1 { font-size: 1.25rem; font-weight: 700; color: #ffffff; }
-    .subtitle { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; line-height: 1.45; }
-    .btn-help { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+    h1 { font-size: 1.25rem; font-weight: 700; color: #ffffff; line-height: 1.25; }
+    .subtitle { font-size: 0.75rem; color: #94a3b8; margin-top: 6px; line-height: 1.45; }
+    .btn-help {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
     .btn-help:hover { background: #334155; }
-    .field-group { display: flex; flex-direction: column; gap: 8px; }
+    .field-group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
     .label-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     label { font-size: 0.875rem; font-weight: 500; color: #e2e8f0; }
     label span { font-size: 0.75rem; font-weight: 400; color: #94a3b8; }
-    .link-btn { background: none; border: none; color: #94a3b8; font-size: 0.75rem; cursor: pointer; transition: color 0.15s; }
+    .link-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color 0.15s;
+    }
     .link-btn:hover { color: #34d399; }
     .input-row { display: flex; gap: 8px; }
     input[type="text"], input[type="password"], input[type="number"] {
-      width: 100%; background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px;
-      color: #f8fafc; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.875rem; outline: none; transition: border-color 0.15s;
+      width: 100%;
+      min-width: 0;
+      min-height: 40px;
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #f8fafc;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
     }
     input:focus { border-color: #10b981; }
     .uppercase { text-transform: uppercase; }
-    .btn-icon { background: #1e293b; border: none; border-radius: 8px; padding: 0 12px; cursor: pointer; font-size: 0.8rem; color: #f1f5f9; transition: background 0.15s; }
+    .btn-icon {
+      flex-shrink: 0;
+      min-width: 42px;
+      min-height: 40px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 0 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #f1f5f9;
+      transition: background 0.15s;
+    }
     .btn-icon:hover { background: #334155; }
-    .btn-indigo { background: #4f46e5; color: #ffffff; border: none; border-radius: 8px; padding: 0 12px; font-size: 0.75rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .btn-indigo {
+      flex-shrink: 0;
+      min-height: 40px;
+      background: #4f46e5;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
     .btn-indigo:hover { background: #6366f1; }
-    .check-row { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
+    .check-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 2px; }
     .check-label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; font-size: 0.75rem; color: #94a3b8; }
-    .check-label input { width: 15px; height: 15px; accent-color: #10b981; cursor: pointer; }
-    .btn-clear { background: none; border: none; color: #fb7185; font-size: 0.75rem; cursor: pointer; }
+    .check-label input { width: 16px; height: 16px; accent-color: #10b981; cursor: pointer; }
+    .btn-clear { background: none; border: none; color: #fb7185; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
     .btn-clear:hover { text-decoration: underline; }
     .grid-mac { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
     .hint { display: block; font-size: 0.6875rem; color: #64748b; }
-    .btn-primary { width: 100%; padding: 10px 16px; background: #059669; color: #ffffff; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(2, 44, 34, 0.5); transition: background 0.15s; }
+    .btn-primary {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 16px;
+      background: #059669;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(2, 44, 34, 0.5);
+      transition: background 0.15s;
+    }
     .btn-primary:hover { background: #10b981; }
     .result-box { background: #020617; border: 1px solid rgba(16, 185, 129, 0.35); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
     .result-meta { font-size: 0.75rem; color: #94a3b8; }
     .result-meta strong { color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .btn-copy { padding: 4px 12px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; border-radius: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+    .btn-copy {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
     .btn-copy:hover { background: rgba(16, 185, 129, 0.25); }
     .password-out { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 1.125rem; color: #34d399; word-break: break-all; user-select: all; padding-top: 2px; }
     .error-msg { font-size: 0.75rem; color: #fda4af; background: rgba(136, 19, 55, 0.35); border: 1px solid rgba(159, 18, 57, 0.5); border-radius: 8px; padding: 10px; }
     .footer-bar { padding-top: 14px; border-top: 1px solid rgba(30, 41, 59, 0.85); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .footer-title { display: block; font-size: 0.75rem; font-weight: 500; color: #cbd5e1; }
     .footer-date { display: block; font-size: 0.6875rem; color: #64748b; margin-top: 2px; }
-    .btn-download { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; background: #1e293b; border: 1px solid #334155; color: #e2e8f0; border-radius: 8px; font-size: 0.75rem; font-weight: 500; text-decoration: none; transition: background 0.15s; }
+    .btn-download {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
     .btn-download:hover { background: #334155; }
     .hidden { display: none !important; }
 
     /* Modal */
     .modal-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.78); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px; }
     .modal { width: 100%; max-width: 560px; background: #0f172a; border: 1px solid #334155; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85); overflow: hidden; }
-    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid #1e293b; background: rgba(15, 23, 42, 0.95); }
-    .modal-title { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; color: #ffffff; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #1e293b; background: rgba(15, 23, 42, 0.95); }
+    .modal-title { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; color: #ffffff; }
     .modal-close { background: none; border: none; color: #94a3b8; font-size: 1.1rem; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
     .modal-close:hover { background: #1e293b; color: #ffffff; }
-    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; font-size: 0.82rem; color: #cbd5e1; max-height: 75vh; overflow-y: auto; line-height: 1.55; }
+    .modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; font-size: 0.82rem; color: #cbd5e1; max-height: 75dvh; overflow-y: auto; line-height: 1.55; }
     .modal-body h3 { font-size: 0.875rem; font-weight: 600; color: #ffffff; margin-bottom: 4px; }
     .modal-body p { font-size: 0.76rem; color: #94a3b8; }
     .modal-body strong { color: #e2e8f0; }
@@ -74,9 +190,53 @@
     .tip-title { font-size: 0.78rem; font-weight: 600; color: #fcd34d; }
     .tip-box p { color: rgba(253, 230, 138, 0.85); }
     .privacy-note { font-size: 0.7rem; color: #64748b; padding-top: 2px; }
-    .modal-foot { padding: 12px 24px; border-top: 1px solid #1e293b; background: rgba(2, 6, 23, 0.5); display: flex; justify-content: flex-end; }
+    .modal-foot { padding: 12px 20px; border-top: 1px solid #1e293b; background: rgba(2, 6, 23, 0.5); display: flex; justify-content: flex-end; }
     .btn-modal-ok { padding: 8px 18px; background: #059669; color: #ffffff; border: none; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .btn-modal-ok:hover { background: #10b981; }
+
+    /* Ajustes para Mobile (Celulares) */
+    @media (max-width: 540px) {
+      body {
+        align-items: flex-start;
+        padding: 12px 12px calc(88px + env(safe-area-inset-bottom));
+      }
+      .card {
+        padding: 18px 16px;
+        gap: 18px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .btn-help {
+        align-self: flex-start;
+      }
+      input[type="text"], input[type="password"], input[type="number"] {
+        font-size: 16px; /* Evita zoom automático no Safari iOS */
+      }
+      .input-row {
+        flex-wrap: wrap;
+      }
+      .input-row input {
+        flex: 1 1 calc(100% - 52px);
+      }
+      .btn-indigo {
+        width: 100%;
+      }
+      .grid-mac {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+      .footer-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .btn-download {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -98,14 +258,16 @@
     <!-- Chave Mestra -->
     <div class="field-group">
       <div class="label-row">
-        <label for="secret">1. Chave Mestra <span>(Senha base da equipe)</span></label>
+        <label for="secret">1. Chave Mestra <span>(Senha base)</span></label>
         <button type="button" id="btnCopySecret" class="link-btn" onclick="copiarTexto('secret', 'btnCopySecret', true)">
           Copiar chave
         </button>
       </div>
 
       <div class="input-row">
-        <input id="secret" type="password" placeholder="Cole a chave mestra ou clique em Gerar Nova" oninput="atualizarSecretSalvo()" />
+        <input id="secret" type="password" placeholder="Cole a chave mestra"
+          autocapitalize="off" autocorrect="off" spellcheck="false"
+          oninput="atualizarSecretSalvo()" />
         <button type="button" class="btn-icon" onclick="toggleSecret()" title="Mostrar ou ocultar chave">👁️</button>
         <button type="button" class="btn-indigo" onclick="gerarSecret()">Gerar Nova</button>
       </div>
@@ -126,14 +288,15 @@
       <div class="field-group" style="gap: 4px;">
         <label for="mac">2. MAC do Equipamento</label>
         <input id="mac" class="uppercase" type="text" placeholder="Ex: AA:BB:CC:11:22:33" maxlength="17"
+          autocapitalize="off" autocorrect="off" spellcheck="false"
           oninput="formatarMacInput(this)" onkeydown="if(event.key === 'Enter') calcularSenha()" />
         <span class="hint">Digite direto ou cole — os ":" entram sozinhos.</span>
       </div>
 
       <div class="field-group" style="gap: 4px;">
         <label for="length">Qtd. Caracteres</label>
-        <input id="length" type="number" value="14" min="12" max="32" />
-        <span class="hint">Mín. 12</span>
+        <input id="length" type="number" inputmode="numeric" value="14" min="12" max="32" />
+        <span class="hint">Mínimo 12 caracteres</span>
       </div>
     </div>
 
@@ -234,6 +397,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

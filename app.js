@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'mac_derivador_master_secret';
+const RELEASE_CACHE_KEY = 'mac_derivador_github_release';
+const RELEASE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hora
 const GITHUB_REPO = 'vanilsonst/mac-password-gen';
 const EXE_ASSET_NAME = 'GeradorSenhaMAC.exe';
 
@@ -13,11 +15,37 @@ window.addEventListener('DOMContentLoaded', () => {
   carregarInfoReleaseExe();
 });
 
-// Consulta a API pública do GitHub Releases para exibir a data e o tamanho do último .exe
+function aplicarDadosRelease(info, dateEl, linkEl) {
+  if (info && info.texto) {
+    dateEl.textContent = info.texto;
+  } else {
+    dateEl.textContent = 'Portátil para Windows 10/11';
+  }
+
+  if (info && info.url) {
+    linkEl.href = info.url;
+  }
+}
+
+// Consulta a API pública do GitHub Releases com cache local de 1 hora
 async function carregarInfoReleaseExe() {
   const dateEl = document.getElementById('exeBuildDate');
   const linkEl = document.getElementById('exeDownloadLink');
   if (!dateEl || !linkEl) return;
+
+  let cache = null;
+  try {
+    const rawCache = localStorage.getItem(RELEASE_CACHE_KEY);
+    if (rawCache) {
+      cache = JSON.parse(rawCache);
+      if (cache && Date.now() - cache.timestamp < RELEASE_CACHE_TTL_MS) {
+        aplicarDadosRelease(cache, dateEl, linkEl);
+        return;
+      }
+    }
+  } catch (_) {
+    // Ignora erro de parse no cache
+  }
 
   try {
     const resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
@@ -31,6 +59,7 @@ async function carregarInfoReleaseExe() {
       ? data.assets.find(a => a.name === EXE_ASSET_NAME)
       : null;
 
+    let texto = 'Portátil para Windows 10/11';
     const isoDate = asset ? asset.updated_at : data.published_at;
     if (isoDate) {
       const dt = new Date(isoDate);
@@ -48,16 +77,21 @@ async function carregarInfoReleaseExe() {
         ? ` • ${(asset.size / (1024 * 1024)).toFixed(1)} MB`
         : '';
 
-      dateEl.textContent = `Atualizado em ${dataFormatada} às ${horaFormatada}${tamanhoMb}`;
+      texto = `Atualizado em ${dataFormatada} às ${horaFormatada}${tamanhoMb}`;
+    }
+
+    const url = (asset && asset.browser_download_url) ? asset.browser_download_url : linkEl.href;
+    const novoCache = { timestamp: Date.now(), texto, url };
+
+    localStorage.setItem(RELEASE_CACHE_KEY, JSON.stringify(novoCache));
+    aplicarDadosRelease(novoCache, dateEl, linkEl);
+  } catch (_) {
+    // Se falhar a rede, reaproveita o cache expirado antes de usar o fallback genérico
+    if (cache) {
+      aplicarDadosRelease(cache, dateEl, linkEl);
     } else {
       dateEl.textContent = 'Portátil para Windows 10/11';
     }
-
-    if (asset && asset.browser_download_url) {
-      linkEl.href = asset.browser_download_url;
-    }
-  } catch (_) {
-    dateEl.textContent = 'Portátil para Windows 10/11';
   }
 }
 
@@ -122,12 +156,20 @@ function limparStorage() {
   document.getElementById('btnClearStorage').classList.add('hidden');
 }
 
+// Remove prefixos comuns (ex: "MAC: ", "0x") antes de extrair os hexadecimais
+function limparStringMac(valor) {
+  return valor
+    .replace(/^\s*(mac|endereço\s*mac|eth|wlan)\s*[:=-]?\s*/i, '')
+    .replace(/0x/gi, '')
+    .replace(/[^0-9a-fA-F]/g, '');
+}
+
 // Máscara automática no campo de MAC
 function formatarMacInput(input) {
-  const posOriginal = input.selectionStart;
-  const antesDoCursor = input.value.slice(0, posOriginal).replace(/[^0-9a-fA-F]/g, '').length;
+  const posOriginal = input.selectionStart || 0;
+  const antesDoCursor = limparStringMac(input.value.slice(0, posOriginal)).length;
 
-  const hexLimpo = input.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 12);
+  const hexLimpo = limparStringMac(input.value).toUpperCase().slice(0, 12);
   const pares = hexLimpo.match(/.{1,2}/g);
   const formatado = pares ? pares.join(':') : '';
 
@@ -139,7 +181,7 @@ function formatarMacInput(input) {
 }
 
 function normalizarMac(mac) {
-  const limpo = mac.replace(/[^0-9a-fA-F]/g, '').toLowerCase();
+  const limpo = limparStringMac(mac).toLowerCase();
   if (limpo.length !== 12) {
     throw new Error('Endereço MAC incompleto ou inválido. Verifique se possui os 12 caracteres (ex: AA:BB:CC:11:22:33).');
   }
@@ -223,15 +265,47 @@ async function calcularSenha() {
 
 async function copiarTexto(elementId, btnId, isInput) {
   const el = document.getElementById(elementId);
-  const texto = isInput ? el.value : el.textContent;
-  if (!texto) return;
-
-  await navigator.clipboard.writeText(texto);
-
   const btn = document.getElementById(btnId);
-  const textoOriginal = btn.textContent;
-  btn.textContent = 'Copiado!';
-  setTimeout(() => {
-    btn.textContent = textoOriginal;
-  }, 1800);
+  const texto = isInput ? el.value : el.textContent;
+
+  if (!texto) {
+    const original = btn.textContent;
+    btn.textContent = 'Vazio!';
+    setTimeout(() => { btn.textContent = original; }, 1200);
+    return;
+  }
+
+  let copiado = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(texto);
+      copiado = true;
+    }
+  } catch (_) {
+    // Segue para o fallback
+  }
+
+  if (!copiado) {
+    const temp = document.createElement('textarea');
+    temp.value = texto;
+    temp.style.position = 'fixed';
+    temp.style.opacity = '0';
+    document.body.appendChild(temp);
+    temp.focus();
+    temp.select();
+    try {
+      copiado = document.execCommand('copy');
+    } catch (_) {
+      copiado = false;
+    }
+    document.body.removeChild(temp);
+  }
+
+  if (copiado) {
+    const textoOriginal = btn.textContent;
+    btn.textContent = 'Copiado!';
+    setTimeout(() => {
+      btn.textContent = textoOriginal;
+    }, 1800);
+  }
 }
