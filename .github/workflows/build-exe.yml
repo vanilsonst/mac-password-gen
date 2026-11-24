@@ -8,8 +8,6 @@ on:
       - 'app.js'
       - 'desktop/**'
       - '.github/workflows/build-exe.yml'
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -58,8 +56,11 @@ jobs:
           path: desktop/dist/GeradorSenhaMAC.exe
           retention-days: 30
 
-      - name: Anexar .exe na Release
-        if: github.event_name == 'release'
+      - name: Publicar .exe na Release Permanente (latest)
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: latest
+          name: Versão Windows Portátil (Última Compilação)
+          body: "Executável portátil 100% offline para Windows 10/11. Atualizado automaticamente a cada nova versão."
           files: desktop/dist/GeradorSenhaMAC.exe
+          make_latest: true
