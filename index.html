@@ -108,14 +108,20 @@
 
     <p id="errorMsg" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 rounded-lg p-2.5"></p>
 
-    <!-- Rodapé com Download da Versão Offline Windows -->
-    <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs text-slate-400">
-      <span>Precisa rodar sem internet?</span>
-      <a href="https://github.com/vanilsonst/mac-password-gen/releases/latest/download/GeradorSenhaMAC.exe"
+    <!-- Rodapé com Download e Data da Última Compilação -->
+    <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-3">
+      <div class="text-xs">
+        <span class="block text-slate-300 font-medium">Versão Offline (Windows)</span>
+        <span id="exeBuildDate" class="block text-[11px] text-slate-500 mt-0.5">
+          Verificando última versão...
+        </span>
+      </div>
+      <a id="exeDownloadLink"
+        href="https://github.com/vanilsonst/mac-password-gen/releases/latest/download/GeradorSenhaMAC.exe"
         target="_blank" rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg font-medium transition">
+        class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium transition">
         <span>🪟</span>
-        <span>Baixar para Windows (.exe)</span>
+        <span>Baixar .exe</span>
       </a>
     </div>
   </div>
@@ -123,7 +129,7 @@
   <!-- MODAL DE AJUDA (POP-UP) -->
   <div id="helpModal" onclick="fecharModalSeFora(event)"
     class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="w-full max-w-xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+    <div class="w-full max-w-xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden">
       
       <!-- Topo do Modal -->
       <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">

@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'mac_derivador_master_secret';
+const GITHUB_REPO = 'vanilsonst/mac-password-gen';
+const EXE_ASSET_NAME = 'GeradorSenhaMAC.exe';
 
 window.addEventListener('DOMContentLoaded', () => {
   const salvo = localStorage.getItem(STORAGE_KEY);
@@ -7,7 +9,57 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rememberSecret').checked = true;
     document.getElementById('btnClearStorage').classList.remove('hidden');
   }
+
+  carregarInfoReleaseExe();
 });
+
+// Consulta a API pública do GitHub Releases para exibir a data e o tamanho do último .exe
+async function carregarInfoReleaseExe() {
+  const dateEl = document.getElementById('exeBuildDate');
+  const linkEl = document.getElementById('exeDownloadLink');
+  if (!dateEl || !linkEl) return;
+
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+      headers: { Accept: 'application/vnd.github+json' }
+    });
+
+    if (!resp.ok) throw new Error('Release indisponível');
+    const data = await resp.json();
+
+    const asset = Array.isArray(data.assets)
+      ? data.assets.find(a => a.name === EXE_ASSET_NAME)
+      : null;
+
+    const isoDate = asset ? asset.updated_at : data.published_at;
+    if (isoDate) {
+      const dt = new Date(isoDate);
+      const dataFormatada = dt.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+      const horaFormatada = dt.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const tamanhoMb = asset
+        ? ` • ${(asset.size / (1024 * 1024)).toFixed(1)} MB`
+        : '';
+
+      dateEl.textContent = `Atualizado em ${dataFormatada} às ${horaFormatada}${tamanhoMb}`;
+    } else {
+      dateEl.textContent = 'Portátil para Windows 10/11';
+    }
+
+    if (asset && asset.browser_download_url) {
+      linkEl.href = asset.browser_download_url;
+    }
+  } catch (_) {
+    dateEl.textContent = 'Portátil para Windows 10/11';
+  }
+}
 
 // Controles do Pop-up de Ajuda
 function abrirModalAjuda() {
