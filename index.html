@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Senha por MAC</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
+    <div>
+      <h1 class="text-xl font-bold text-white">Derivador de Senha por MAC</h1>
+      <p class="text-xs text-slate-400 mt-1">Processamento 100% local no navegador (HMAC-SHA256). Nenhum dado é enviado pela rede.</p>
+    </div>
+
+    <!-- MASTER_SECRET -->
+    <div class="space-y-2">
+      <div class="flex justify-between items-center">
+        <label for="secret" class="block text-sm font-medium text-slate-300">MASTER_SECRET</label>
+        <button type="button" id="btnCopySecret" onclick="copiarTexto('secret', 'btnCopySecret', true)"
+          class="text-xs text-slate-400 hover:text-emerald-400 transition">
+          Copiar chave
+        </button>
+      </div>
+      <div class="flex gap-2">
+        <input id="secret" type="password" placeholder="Insira ou gere uma chave mestra"
+          oninput="atualizarSecretSalvo()"
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500" />
+        <button type="button" onclick="toggleSecret()" title="Mostrar/Ocultar"
+          class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs">👁️</button>
+        <button type="button" onclick="gerarSecret()"
+          class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium whitespace-nowrap">
+          Gerar Chave
+        </button>
+      </div>
+
+      <!-- Persistência Local -->
+      <div class="flex items-center justify-between pt-1">
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+          <input id="rememberSecret" type="checkbox" onchange="gerenciarStorage()"
+            class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+          <span class="text-xs text-slate-400">Salvar chave neste navegador (localStorage)</span>
+        </label>
+        <button type="button" id="btnClearStorage" onclick="limparStorage()"
+          class="hidden text-xs text-rose-400 hover:underline">
+          Limpar salva
+        </button>
+      </div>
+    </div>
+
+    <!-- MAC Address e Tamanho -->
+    <div class="grid grid-cols-3 gap-3">
+      <div class="col-span-2">
+        <label for="mac" class="block text-sm font-medium text-slate-300 mb-1">Endereço MAC</label>
+        <input id="mac" type="text" placeholder="AA:BB:CC:11:22:33"
+          onkeydown="if(event.key === 'Enter') calcularSenha()"
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-emerald-500" />
+      </div>
+      <div>
+        <label for="length" class="block text-sm font-medium text-slate-300 mb-1">Tamanho</label>
+        <input id="length" type="number" value="14" min="12" max="32"
+          class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500" />
+      </div>
+    </div>
+
+    <!-- Botão Principal -->
+    <button type="button" onclick="calcularSenha()"
+      class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition">
+      Gerar / Recuperar Senha
+    </button>
+
+    <!-- Resultado -->
+    <div id="resultBox" class="hidden bg-slate-950 border border-slate-800 rounded-lg p-4 space-y-2">
+      <div class="flex justify-between items-center gap-2">
+        <span class="text-xs text-slate-400">Senha para <strong id="macNormalized" class="text-slate-200 font-mono"></strong>:</span>
+        <button type="button" id="btnCopyPass" onclick="copiarTexto('passwordOutput', 'btnCopyPass', false)"
+          class="px-3 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded text-xs font-medium transition">
+          Copiar Senha
+        </button>
+      </div>
+      <div id="passwordOutput" class="font-mono text-lg text-emerald-400 break-all select-all pt-1"></div>
+    </div>
+
+    <p id="errorMsg" class="hidden text-xs text-rose-400"></p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
