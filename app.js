@@ -1,6 +1,5 @@
 const STORAGE_KEY = 'mac_derivador_master_secret';
 
-// Carrega o MASTER_SECRET salvo ao abrir a página
 window.addEventListener('DOMContentLoaded', () => {
   const salvo = localStorage.getItem(STORAGE_KEY);
   if (salvo) {
@@ -10,6 +9,28 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Controles do Pop-up de Ajuda
+function abrirModalAjuda() {
+  document.getElementById('helpModal').classList.remove('hidden');
+}
+
+function fecharModalAjuda() {
+  document.getElementById('helpModal').classList.add('hidden');
+}
+
+function fecharModalSeFora(event) {
+  if (event.target.id === 'helpModal') {
+    fecharModalAjuda();
+  }
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    fecharModalAjuda();
+  }
+});
+
+// Persistência local da Chave Mestra
 function gerenciarStorage() {
   const checkbox = document.getElementById('rememberSecret');
   const secret = document.getElementById('secret').value;
@@ -49,10 +70,26 @@ function limparStorage() {
   document.getElementById('btnClearStorage').classList.add('hidden');
 }
 
+// Máscara automática no campo de MAC
+function formatarMacInput(input) {
+  const posOriginal = input.selectionStart;
+  const antesDoCursor = input.value.slice(0, posOriginal).replace(/[^0-9a-fA-F]/g, '').length;
+
+  const hexLimpo = input.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 12);
+  const pares = hexLimpo.match(/.{1,2}/g);
+  const formatado = pares ? pares.join(':') : '';
+
+  input.value = formatado;
+
+  let novaPos = antesDoCursor + Math.floor((antesDoCursor - 1) / 2);
+  if (antesDoCursor === 0) novaPos = 0;
+  input.setSelectionRange(novaPos, novaPos);
+}
+
 function normalizarMac(mac) {
   const limpo = mac.replace(/[^0-9a-fA-F]/g, '').toLowerCase();
   if (limpo.length !== 12) {
-    throw new Error('Endereço MAC inválido. Informe 12 dígitos hexadecimais.');
+    throw new Error('Endereço MAC incompleto ou inválido. Verifique se possui os 12 caracteres (ex: AA:BB:CC:11:22:33).');
   }
   return limpo;
 }
@@ -82,9 +119,9 @@ async function calcularSenha() {
     const macRaw = document.getElementById('mac').value;
     const tamanho = parseInt(document.getElementById('length').value, 10);
 
-    if (!secret) throw new Error('Informe ou gere um MASTER_SECRET.');
+    if (!secret) throw new Error('Por favor, informe a Chave Mestra ou clique em "Gerar Nova".');
     if (isNaN(tamanho) || tamanho < 12 || tamanho > 32) {
-      throw new Error('O tamanho deve estar entre 12 e 32 caracteres.');
+      throw new Error('A quantidade de caracteres deve ser entre 12 e 32.');
     }
 
     const macNorm = normalizarMac(macRaw);
@@ -145,20 +182,4 @@ async function copiarTexto(elementId, btnId, isInput) {
   setTimeout(() => {
     btn.textContent = textoOriginal;
   }, 1800);
-}
-
-function formatarMacInput(input) {
-  const posOriginal = input.selectionStart;
-  const antesDoCursor = input.value.slice(0, posOriginal).replace(/[^0-9a-fA-F]/g, '').length;
-
-  const hexLimpo = input.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase().slice(0, 12);
-  const pares = hexLimpo.match(/.{1,2}/g);
-  const formatado = pares ? pares.join(':') : '';
-
-  input.value = formatado;
-
-  // Recalcula a posição exata do cursor considerando os ':' adicionados
-  let novaPos = antesDoCursor + Math.floor((antesDoCursor - 1) / 2);
-  if (antesDoCursor === 0) novaPos = 0;
-  input.setSelectionRange(novaPos, novaPos);
 }

@@ -4,34 +4,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gerador de Senha por MAC</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f172a'/%3E%3Cpath d='M42 14a12 12 0 0 0-11.3 16L16 44.7V50h5.3l2.7-2.7V44h3.3l2.7-2.7V38h3.3l1.4-1.4A12 12 0 1 0 42 14zm3 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z' fill='%2310b981'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4">
   <div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-5">
-    <div>
-      <h1 class="text-xl font-bold text-white">Derivador de Senha por MAC</h1>
-      <p class="text-xs text-slate-400 mt-1">Processamento 100% local no navegador (HMAC-SHA256). Nenhum dado é enviado pela rede.</p>
+    
+    <!-- Cabeçalho com botão de Ajuda -->
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-bold text-white">Gerador de Senhas por MAC</h1>
+        <p class="text-xs text-slate-400 mt-1">
+          Crie ou consulte senhas únicas para cada equipamento. Tudo funciona localmente no seu navegador, sem enviar dados pela internet.
+        </p>
+      </div>
+      <button type="button" onclick="abrirModalAjuda()"
+        class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-lg text-xs font-medium transition">
+        <span>❓</span>
+        <span>Como usar?</span>
+      </button>
     </div>
 
-    <!-- MASTER_SECRET -->
-    <div class="space-y-2">
+    <!-- Chave Mestra -->
+    <div class="space-y-2 pt-1">
       <div class="flex justify-between items-center">
-        <label for="secret" class="block text-sm font-medium text-slate-300">MASTER_SECRET</label>
+        <label for="secret" class="block text-sm font-medium text-slate-200">
+          1. Chave Mestra <span class="text-xs font-normal text-slate-400">(Senha base da equipe)</span>
+        </label>
         <button type="button" id="btnCopySecret" onclick="copiarTexto('secret', 'btnCopySecret', true)"
           class="text-xs text-slate-400 hover:text-emerald-400 transition">
           Copiar chave
         </button>
       </div>
+
       <div class="flex gap-2">
-        <input id="secret" type="password" placeholder="Insira ou gere uma chave mestra"
+        <input id="secret" type="password" placeholder="Cole a chave mestra ou clique em Gerar Nova"
           oninput="atualizarSecretSalvo()"
           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500" />
-        <button type="button" onclick="toggleSecret()" title="Mostrar/Ocultar"
+        <button type="button" onclick="toggleSecret()" title="Mostrar ou ocultar chave"
           class="px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs">👁️</button>
         <button type="button" onclick="gerarSecret()"
-          class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium whitespace-nowrap">
-          Gerar Chave
+          class="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-medium whitespace-nowrap transition">
+          Gerar Nova
         </button>
       </div>
 
@@ -40,41 +54,50 @@
         <label class="inline-flex items-center gap-2 cursor-pointer select-none">
           <input id="rememberSecret" type="checkbox" onchange="gerenciarStorage()"
             class="w-4 h-4 rounded bg-slate-950 border-slate-700 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900" />
-          <span class="text-xs text-slate-400">Salvar chave neste navegador (localStorage)</span>
+          <span class="text-xs text-slate-400">Manter chave salva neste dispositivo</span>
         </label>
         <button type="button" id="btnClearStorage" onclick="limparStorage()"
           class="hidden text-xs text-rose-400 hover:underline">
-          Limpar salva
+          Esquecer chave
         </button>
       </div>
     </div>
 
-    <!-- MAC Address e Tamanho -->
+    <!-- Endereço MAC e Quantidade de Caracteres -->
     <div class="grid grid-cols-3 gap-3">
       <div class="col-span-2">
-        <label for="mac" class="block text-sm font-medium text-slate-300 mb-1">Endereço MAC</label>
-        <input id="mac" type="text" placeholder="AA:BB:CC:11:22:33" maxlength="17"
+        <label for="mac" class="block text-sm font-medium text-slate-200 mb-1">
+          2. MAC do Equipamento
+        </label>
+        <input id="mac" type="text" placeholder="Ex: AA:BB:CC:11:22:33" maxlength="17"
           oninput="formatarMacInput(this)"
           onkeydown="if(event.key === 'Enter') calcularSenha()"
           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:border-emerald-500" />
+        <span class="block text-[11px] text-slate-500 mt-1">Digite direto ou cole — os ":" entram sozinhos.</span>
       </div>
+
       <div>
-        <label for="length" class="block text-sm font-medium text-slate-300 mb-1">Tamanho</label>
+        <label for="length" class="block text-sm font-medium text-slate-200 mb-1">
+          Qtd. Caracteres
+        </label>
         <input id="length" type="number" value="14" min="12" max="32"
           class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-emerald-500" />
+        <span class="block text-[11px] text-slate-500 mt-1">Mín. 12</span>
       </div>
     </div>
 
     <!-- Botão Principal -->
     <button type="button" onclick="calcularSenha()"
-      class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition">
-      Gerar / Recuperar Senha
+      class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition shadow-lg shadow-emerald-950/40">
+      Gerar ou Consultar Senha
     </button>
 
     <!-- Resultado -->
-    <div id="resultBox" class="hidden bg-slate-950 border border-slate-800 rounded-lg p-4 space-y-2">
+    <div id="resultBox" class="hidden bg-slate-950 border border-emerald-500/30 rounded-xl p-4 space-y-2">
       <div class="flex justify-between items-center gap-2">
-        <span class="text-xs text-slate-400">Senha para <strong id="macNormalized" class="text-slate-200 font-mono"></strong>:</span>
+        <span class="text-xs text-slate-400">
+          Senha do equipamento <strong id="macNormalized" class="text-slate-200 font-mono"></strong>:
+        </span>
         <button type="button" id="btnCopyPass" onclick="copiarTexto('passwordOutput', 'btnCopyPass', false)"
           class="px-3 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 rounded text-xs font-medium transition">
           Copiar Senha
@@ -83,7 +106,80 @@
       <div id="passwordOutput" class="font-mono text-lg text-emerald-400 break-all select-all pt-1"></div>
     </div>
 
-    <p id="errorMsg" class="hidden text-xs text-rose-400"></p>
+    <p id="errorMsg" class="hidden text-xs text-rose-400 bg-rose-950/40 border border-rose-800/50 rounded-lg p-2.5"></p>
+  </div>
+
+  <!-- MODAL DE AJUDA (POP-UP) -->
+  <div id="helpModal" onclick="fecharModalSeFora(event)"
+    class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="w-full max-w-xl bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+      
+      <!-- Topo do Modal -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">📘</span>
+          <h2 class="text-base font-bold text-white">Guia Rápido — Como usar a ferramenta</h2>
+        </div>
+        <button type="button" onclick="fecharModalAjuda()"
+          class="text-slate-400 hover:text-white text-lg leading-none px-2 py-1 rounded-lg hover:bg-slate-800 transition">
+          ✕
+        </button>
+      </div>
+
+      <!-- Conteúdo do Modal -->
+      <div class="p-6 space-y-4 text-sm text-slate-300 max-h-[75vh] overflow-y-auto leading-relaxed">
+        <div>
+          <h3 class="font-semibold text-white mb-1">🎯 Para que serve?</h3>
+          <p class="text-xs text-slate-400">
+            Esta ferramenta cria uma senha forte e exclusiva para cada roteador, ONU/ONT ou servidor combinando a <strong class="text-slate-200">Chave Mestra</strong> da empresa com o <strong class="text-slate-200">Endereço MAC</strong> do aparelho. Assim, cada equipamento tem sua própria senha sem precisar anotar tudo em planilhas.
+          </p>
+        </div>
+
+        <div class="space-y-2.5">
+          <h3 class="font-semibold text-white">🪜 Passo a passo de uso</h3>
+          
+          <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
+            <p class="font-semibold text-emerald-400">Passo 1: Informe a Chave Mestra</p>
+            <p class="text-slate-400">
+              Cole a chave oficial da equipe no primeiro campo. Se estiver criando um padrão novo do zero, clique em <strong class="text-slate-200">Gerar Nova</strong> e guarde essa chave em um local seguro (cofre de senhas). Marque <em class="text-slate-300">"Manter chave salva neste dispositivo"</em> para não precisar digitar toda vez.
+            </p>
+          </div>
+
+          <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
+            <p class="font-semibold text-emerald-400">Passo 2: Digite ou cole o Endereço MAC</p>
+            <p class="text-slate-400">
+              Informe o MAC da interface desejada (ex: <code class="text-slate-200">AA:BB:CC:11:22:33</code>). Você pode colar com traços, pontos ou tudo junto que o campo organiza automaticamente.
+            </p>
+          </div>
+
+          <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3 text-xs space-y-1">
+            <p class="font-semibold text-emerald-400">Passo 3: Gere ou recupere a senha</p>
+            <p class="text-slate-400">
+              Clique em <strong class="text-slate-200">Gerar ou Consultar Senha</strong>. A senha gerada sempre terá letras maiúsculas, minúsculas, números e símbolos compatíveis com qualquer terminal ou painel web.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-amber-950/30 border border-amber-700/40 rounded-lg p-3 text-xs space-y-1">
+          <p class="font-semibold text-amber-300">💡 Como recuperar uma senha já criada?</p>
+          <p class="text-amber-200/80">
+            Basta informar a <strong>mesma Chave Mestra</strong>, o <strong>mesmo MAC</strong> e o <strong>mesmo número de caracteres</strong> (padrão 14). O sistema sempre calculará exatamente a mesma senha.
+          </p>
+        </div>
+
+        <div class="text-[11px] text-slate-500 pt-1">
+          🔒 <strong>Privacidade:</strong> Nenhum dado digitado aqui é enviado para servidores externos. Todo o cálculo acontece dentro do próprio navegador.
+        </div>
+      </div>
+
+      <!-- Rodapé do Modal -->
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-950/50 flex justify-end">
+        <button type="button" onclick="fecharModalAjuda()"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition">
+          Entendi
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
