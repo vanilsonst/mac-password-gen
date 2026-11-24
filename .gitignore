@@ -1,0 +1,10 @@
+# Artefatos gerados pelo PyInstaller (compilados automaticamente no GitHub Actions)
+desktop/build/
+desktop/dist/
+*.spec
+
+# Cache e ambientes virtuais Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/

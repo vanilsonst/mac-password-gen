@@ -1,0 +1,63 @@
+name: Build Windows Portable EXE
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app.js'
+      - 'desktop/**'
+      - '.github/workflows/build-exe.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências (pywebview e pyinstaller)
+        run: |
+          python -m pip install --upgrade pip
+          pip install pywebview pyinstaller
+
+      - name: Compilar GeradorSenhaMAC.exe
+        working-directory: desktop
+        run: |
+          $iconArg = ""
+          if (Test-Path "favicon.ico") {
+            $iconArg = "--icon=favicon.ico"
+          } elseif (Test-Path "..\favicon.ico") {
+            $iconArg = "--icon=..\favicon.ico"
+          }
+          pyinstaller --noconfirm --onefile --windowed `
+            --name "GeradorSenhaMAC" `
+            $iconArg `
+            --add-data "index.html;." `
+            --add-data "..\app.js;." `
+            main.py
+
+      - name: Disponibilizar .exe como Artifact do Workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: GeradorSenhaMAC-Windows
+          path: desktop/dist/GeradorSenhaMAC.exe
+          retention-days: 30
+
+      - name: Anexar .exe na Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: desktop/dist/GeradorSenhaMAC.exe

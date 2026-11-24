@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Senhas por MAC — IKNET</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { background: #020617; color: #f1f5f9; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .card { width: 100%; max-width: 500px; background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 18px; }
+    .header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    h1 { font-size: 1.2rem; font-weight: 700; color: #fff; }
+    .subtitle { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+    .btn-help { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
+    .btn-help:hover { background: #334155; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; }
+    label { font-size: 0.85rem; font-weight: 500; color: #e2e8f0; }
+    label span { font-size: 0.75rem; font-weight: 400; color: #94a3b8; }
+    .link-btn { background: none; border: none; color: #94a3b8; font-size: 0.75rem; cursor: pointer; }
+    .link-btn:hover { color: #34d399; }
+    .input-row { display: flex; gap: 8px; }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%; background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 9px 12px;
+      color: #f8fafc; font-family: Consolas, monospace; font-size: 0.875rem; outline: none;
+    }
+    input:focus { border-color: #10b981; }
+    .uppercase { text-transform: uppercase; }
+    .btn-icon { background: #1e293b; border: none; border-radius: 8px; padding: 0 12px; cursor: pointer; font-size: 0.85rem; }
+    .btn-indigo { background: #4f46e5; color: #fff; border: none; border-radius: 8px; padding: 0 12px; font-size: 0.75rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .btn-indigo:hover { background: #6366f1; }
+    .check-row { display: flex; justify-content: space-between; align-items: center; padding-top: 2px; }
+    .check-label { display: inline-flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #94a3b8; cursor: pointer; }
+    .btn-clear { background: none; border: none; color: #fb7185; font-size: 0.75rem; cursor: pointer; }
+    .grid-2 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    .hint { font-size: 0.68rem; color: #64748b; }
+    .btn-primary { width: 100%; padding: 11px; background: #059669; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; }
+    .btn-primary:hover { background: #10b981; }
+    .result-box { background: #020617; border: 1px solid rgba(16,185,129,0.35); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .btn-copy { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+    .password-out { font-family: Consolas, monospace; font-size: 1.15rem; color: #34d399; word-break: break-all; user-select: all; }
+    .error-msg { font-size: 0.75rem; color: #fda4af; background: rgba(136,19,55,0.3); border: 1px solid rgba(159,18,57,0.5); padding: 10px; border-radius: 8px; }
+    .hidden { display: none !important; }
+    /* Modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .modal { width: 100%; max-width: 520px; background: #0f172a; border: 1px solid #334155; border-radius: 16px; overflow: hidden; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #1e293b; }
+    .modal-body { padding: 18px 20px; font-size: 0.8rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto; line-height: 1.5; }
+    .step-box { background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 10px 12px; }
+    .step-title { color: #34d399; font-weight: 600; margin-bottom: 4px; }
+    .modal-foot { padding: 12px 20px; border-top: 1px solid #1e293b; display: flex; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div>
+        <h1>Gerador de Senhas por MAC</h1>
+        <p class="subtitle">Crie ou consulte senhas únicas para cada equipamento. Funciona 100% offline no seu computador.</p>
+      </div>
+      <button type="button" class="btn-help" onclick="abrirModalAjuda()">❓ Como usar?</button>
+    </div>
+
+    <div class="field-group">
+      <div class="label-row">
+        <label for="secret">1. Chave Mestra <span>(Senha base da equipe)</span></label>
+        <button type="button" id="btnCopySecret" class="link-btn" onclick="copiarTexto('secret', 'btnCopySecret', true)">Copiar chave</button>
+      </div>
+      <div class="input-row">
+        <input id="secret" type="password" placeholder="Cole a chave mestra ou clique em Gerar Nova" oninput="atualizarSecretSalvo()" />
+        <button type="button" class="btn-icon" onclick="toggleSecret()" title="Mostrar/Ocultar">👁️</button>
+        <button type="button" class="btn-indigo" onclick="gerarSecret()">Gerar Nova</button>
+      </div>
+      <div class="check-row">
+        <label class="check-label">
+          <input id="rememberSecret" type="checkbox" onchange="gerenciarStorage()" />
+          <span>Manter chave salva neste computador</span>
+        </label>
+        <button type="button" id="btnClearStorage" class="btn-clear hidden" onclick="limparStorage()">Esquecer chave</button>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field-group">
+        <label for="mac">2. MAC do Equipamento</label>
+        <input id="mac" class="uppercase" type="text" placeholder="Ex: AA:BB:CC:11:22:33" maxlength="17"
+          oninput="formatarMacInput(this)" onkeydown="if(event.key === 'Enter') calcularSenha()" />
+        <span class="hint">Digite direto ou cole — os ":" entram sozinhos.</span>
+      </div>
+      <div class="field-group">
+        <label for="length">Caracteres</label>
+        <input id="length" type="number" value="14" min="12" max="32" />
+        <span class="hint">Mín. 12</span>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" onclick="calcularSenha()">Gerar ou Consultar Senha</button>
+
+    <div id="resultBox" class="result-box hidden">
+      <div class="label-row">
+        <span class="subtitle">Senha do equipamento <strong id="macNormalized" style="color:#fff"></strong>:</span>
+        <button type="button" id="btnCopyPass" class="btn-copy" onclick="copiarTexto('passwordOutput', 'btnCopyPass', false)">Copiar Senha</button>
+      </div>
+      <div id="passwordOutput" class="password-out"></div>
+    </div>
+
+    <p id="errorMsg" class="error-msg hidden"></p>
+  </div>
+
+  <!-- Modal de Ajuda -->
+  <div id="helpModal" class="modal-backdrop hidden" onclick="fecharModalSeFora(event)">
+    <div class="modal">
+      <div class="modal-head">
+        <strong style="color:#fff">📘 Guia Rápido — Como usar</strong>
+        <button type="button" class="link-btn" style="font-size:1rem" onclick="fecharModalAjuda()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Esta ferramenta combina a <strong>Chave Mestra</strong> da equipe com o <strong>Endereço MAC</strong> do aparelho para gerar sempre a mesma senha exclusiva daquele equipamento, mesmo sem internet.</p>
+        <div class="step-box">
+          <div class="step-title">Passo 1: Chave Mestra</div>
+          Cole a chave oficial da equipe e marque <em>"Manter chave salva neste computador"</em> para deixá-la gravada localmente.
+        </div>
+        <div class="step-box">
+          <div class="step-title">Passo 2: MAC do Equipamento</div>
+          Digite ou cole o MAC da etiqueta/interface (ex: <code>AA:BB:CC:11:22:33</code>).
+        </div>
+        <div class="step-box">
+          <div class="step-title">Passo 3: Gerar ou Recuperar</div>
+          Clique em <strong>Gerar ou Consultar Senha</strong>. Com a mesma Chave Mestra e o mesmo MAC, o resultado será sempre idêntico.
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-primary" style="width:auto; padding:8px 18px" onclick="fecharModalAjuda()">Entendi</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
